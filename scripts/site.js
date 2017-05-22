@@ -1,73 +1,68 @@
 import $ from "jquery";
-import getWeather from './api_call'
+import getWeather from './apiCall'
+import getContext from './getContext'
+import createHTML, {createInputError} from './createHTML'
 
 import "az-styles";
 import "bootstrap";
 
-var Handlebars = require('handlebars')
+const cityPartial = require('../views/partials/city.hbs')
+const detailsPartial = require('../views/partials/details.hbs')
+const warningPartial = require('../views/partials/warning.hbs')
+
 
 $(document).ready(function () {
   // DOM caching
   const $form = $('#form')
   const btn = $form.find('button')
   const input = $form.find('input')
+  const $city = $form.next()
+  const details = $city.next()
 
-  const getContext = (data) => {
-    // console.log(data.item)
-    return {
-      city: data.location.city,
-      forecast: [
-        ...data.item.forecast
-      ]
-    }
-  }
-
-  const createCityHTML = (data) => {
-    // var source   = $('#stats-template').html()
-    var source   = '<h4>{{city}}</h4>'
-    var template = Handlebars.compile(source)
-    var html    = template(data)
-    $('#city').html(html)
-    console.log(source)
-  }
-
-  const createDetailHTML = (data) => {
-    // var source   = $("#details-template").html()
-    var source = `
-      {{#each forecast}}
-        <tr>
-          <td>{{date}}</td>
-          <td>{{low}}</td>
-          <td>{{high}}</td>
-          <td>{{text}}</td>
-        </tr>
-      {{/each}}
-
-    `
-    var template = Handlebars.compile(source)
-    var html    = template(data)
-    $('#details').html(html)
-    console.log(source)
+  const clearAll = () => {
+    input.val('')
+    $city.text('')
+    input.parent().removeClass('has-error')
+    input.next().remove()
+    details.html('')
   }
 
   btn.click(
     () => {
       const city = input.val()
+      clearAll()
       if (city) {
-        getWeather(city).then((res)=>{
-          const data = res.data.query.results.channel
-          if (data.location.country !== 'United States') {
-            console.log(data.location.country)
+        getWeather(city)
+        .then((res)=>res.data.query)
+        .then((query)=>{
+          if (query.count > 0) {
+            var data = query.results.channel
+
+            if (data.location.country !== 'United States') {
+              const context = {
+                title: "We only support US lookup",
+                text: "Please enter a valid US city/state"
+              }
+              createHTML(context, warningPartial, 'details')
+            } else {
+              let context = getContext(data)
+              createHTML(context, cityPartial, 'city')
+              createHTML(context, detailsPartial, 'details')
+            }
           } else {
-            let context = getContext(data)
-            createCityHTML(context)
-            createDetailHTML(context)
+            const context = {
+              title: "No result found",
+              text: "Please enter a valid US city/state"
+            }
+            createHTML(context, warningPartial, 'details')
           }
         })
       } else {
-        input.css({
-          borderColor: 'red'
-        })
+        const context = {
+          inputField: input.attr('id'),
+          text: 'Please enter a city/state'
+        }
+        createInputError(input, context)
       }
     }
   )

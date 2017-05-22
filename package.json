@@ -55,9 +55,11 @@
     "express": "^4.1.1",
     "font-awesome": "^4.6.3",
     "handlebars": "^4.0.10",
+    "handlebars-loader": "^1.5.0",
     "hbs": "^4.0.0",
     "hbs-utils": "https://github.com/tylerevans/hbs-utils",
     "jquery": "^2.1.4",
-    "lodash": "^4.17.2"
+    "lodash": "^4.17.2",
+    "path": "^0.12.7"
   }
 }
